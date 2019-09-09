@@ -9,57 +9,139 @@ document.getElementById('mainBox').appendChild(canvasBeta); //добавляю �
 //стандартная настройка холста
 var canvasBeta = document.getElementById('canvasBeta');
 var ctxBeta = canvasBeta.getContext('2d');
+procentFunc = (value, direction) => {
+    result = (direction == 'x') ? xPoint * value / 100 : yPoint * value / 100;
+    return(result)
+}
 //cleaning canvas
 clearCanvasBeta  = () => {
     ctxBeta.clearRect(0, 0, canvasBeta.width, canvasBeta.height);
 }
-//creating charakter
-class CharacterBeta {
-    constructor(name, gravity, acceleration) {
+//material object father
+mo = {
+
+}
+moList = []
+//creating object
+//material object constructor
+indexer = 0;
+class MOC {
+    constructor(name){
         this.name = name;
-        this.width =  70 /3;
-        this.height =  180 /3;
-        this.gravity = gravity;
-        this.acceleration = acceleration;
-        this.flight = true;
+        this.mass = 2;
+        this.elasticity = 0;
+        this.height = 10;
+        this.width = 10;
+        this.nuclearAttraction;
+        this.xPosition = procentFunc(50, 'x');
+        this.yPosition = procentFunc(50, 'y');
+        this.color = 'black';
+        this.xEnergi = 0;
+        this.yEnergi = 0;
+        this.index = indexer;
+        moList[indexer] = this;
+        indexer++;
     }
 }
-cubus = new CharacterBeta('Cubus', true, 0);
-cubus.position = [10, 0];
-drawCubus = () =>{
+//all object here
+//adam
+mo.adam = new MOC('adam');
+mo.adam.color = 'red';
+mo.adam.mass = 4;
+mo.adam.yPosition = procentFunc(50, 'y') + 90;
+//eva
+mo.eva = new MOC('eva');
+mo.eva.yPosition = procentFunc(30, 'y')
+mo.eva.xPosition = procentFunc(50, 'x')
+mo.eva.color = 'yellow';
+//kain
+mo.kain = new MOC('kain');
+mo.kain.color = 'brown';
+mo.kain.mass = 2;
+mo.kain.yPosition = procentFunc(50, 'y') + 30;
+//avel
+mo.avel = new MOC('avel');
+mo.avel.color = 'black';
+mo.avel.mass = 2;
+mo.avel.yPosition = procentFunc(50, 'y') + 70;
+//drawingWorld 
+counterTime = 0;
+drawWorld = () =>{
     clearCanvasBeta();
-    attraction('000');
-    obstacleFind();
-    ctxBeta.fillStyle = 'black';
-    ctxBeta.fillRect(cubus.position[0], cubus.position[1], cubus.width, cubus.height);
-    window.requestAnimationFrame(drawCubus);
+    //gravity();
+    borderControl();
+    energiImpact();
+    gravityVisualization();
+    for(var key in mo){
+        i = mo[key];
+        ctxBeta.fillStyle = mo[key].color;
+        ctxBeta.fillRect(i.xPosition - i.width/2,
+                         i.yPosition - i.height/2,
+                         i.width, i.height);
+    }
+    counterTime += 0.01
+    requestAnimationFrame(drawWorld);
 }
-obstacleFind = () => {
-    if ((cubus.position[1] + cubus.height) + cubus.acceleration >= betaEarth && cubus.flight){
-        cubus.acceleration = 0;
-        cubus.position[1] = betaEarth - cubus.height;
-        cubus.flight = false;
-        cubus.gravity = false;
-    }else if(cubus.position[1] == betaEarth - cubus.height){
-        cubus.mayJump = true;
-    }else{
-        cubus.gravity = true;
+requestAnimationFrame(drawWorld);
+//creating gravity
+pointOfAttraction = [procentFunc(50, 'x') - 2.5, procentFunc(50, 'y') - 2.5];
+gravity = () => {
+    for(var key in mo){
+        i = mo[key];
+        i.yPosition;
     }
 }
-window.requestAnimationFrame(drawCubus);
-betaEarth = 300;
-attraction = (id) => {
-    if(id == '000'){
-        if(cubus.gravity){
-            cubus.position[1] -= cubus.acceleration;
-            cubus.acceleration -= 0.2;
-            cubus.flight = true;
+//gravity visualization
+gravityVisualization = () => {
+    ctxBeta.fillStyle = 'black';
+    ctxBeta.fillRect(pointOfAttraction[0], pointOfAttraction[1], 5, 5);
+}
+// energi impact
+energiImpact = () => {
+    for(var key in mo){
+        i = mo[key];
+        i.xPosition+=i.xEnergi;
+        i.yPosition+=i.yEnergi;
+    }
+}
+//
+stopCollisionX= false;
+stopCollisionY= false;
+borderControl = () =>{
+    for(var key in mo){
+        i = mo[key];
+        if (i.index != 3){
+            //x direction
+            if(Math.abs(moList[i.index+1].xPosition - moList[i.index].xPosition) <= Math.abs(-i.width/2 - moList[i.index+1].width/2) &&
+               Math.abs(moList[i.index+1].yPosition - moList[i.index].yPosition) <= Math.abs(-i.height/2 - moList[i.index+1].height/2)){
+                if (Math.abs(moList[i.index+1].xPosition - moList[i.index].xPosition) <= Math.abs(-i.width/2 - moList[i.index+1].width/2) && ! stopCollisionX){
+                    if (moList[i.index+1].xEnergi > 0){
+                        moList[i.index].xEnergi += 0.6*(moList[i.index+1].xEnergi);
+                        moList[i.index+1].xEnergi *= 0.4;
+                    }else{
+                        moList[i.index+1].xEnergi += 0.6*moList[i.index].xEnergi;
+                        moList[i.index].xEnergi *= 0.4;
+                    }
+                    stopCollisionX= true;
+                }
+                if(Math.abs(moList[i.index+1].xPosition - moList[i.index].xPosition) > i.width*2){
+                    stopCollisionX= false;
+                }
+                //y direction
+                if (Math.abs(moList[i.index+1].yPosition - moList[i.index].yPosition) <= Math.abs(-i.height/2 - moList[i.index+1].height/2) && ! stopCollisionY){
+                    if (moList[i.index+1].yEnergi > 0){
+                        moList[i.index].yEnergi = (0.6*i.mass*moList[i.index+1].mass)/(i.mass + moList[i.index+1].mass) * moList[i.index+1].yEnergi;
+                        moList[i.index+1].yEnergi = (moList[i.index+1].mass-i.mass)/(i.mass + moList[i.index+1].mass) * moList[i.index+1].yEnergi;
+                    }else{
+                        moList[i.index+1].yEnergi = (2*i.mass*moList[i.index+1].mass)/(i.mass + moList[i.index+1].mass) * i.yEnergi;
+                        moList[i.index].yEnergi = (i.mass - moList[i.index+1].mass)/(i.mass + moList[i.index+1].mass) * i.yEnergi;
+                    }
+                    stopCollisionY = true;
+                }
+                if(Math.abs(moList[i.index+1].yPosition - moList[i.index].yPosition) > i.height*2){
+                    stopCollisionY = false;
+                }
+            }
         }
     }
 }
-document.addEventListener('keyup', (event) => {
-    if (event.code == 'ArrowUp' && cubus.mayJump){
-        cubus.acceleration = 8;
-        cubus.gravity = true;
-    }
-});
